@@ -1,14 +1,14 @@
-import tkinter
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 from tkinter import messagebox
-import os
 import cv2
+import os
 import numpy as np
 
 
 class TrainDataset:
+
     def __init__(self, root):
         self.root = root
         self.root.geometry("1950x1030+0+0")
@@ -28,7 +28,7 @@ class TrainDataset:
         f_lbl1.place(x=0, y=47, width=1950, height=325)
 
         # Button Frame
-        train_btn = tk.Button(self.root, text="Train Data", cursor="hand2", command=self.train_classifier, font=(
+        train_btn = tk.Button(self.root, text="Train Data", cursor="hand2", command=self.train_dataset, font=(
             "times new roman", 40, "bold"), bg="blue", fg="white", width=1950)
         train_btn.place(x=0, y=380, width=1950, height=80)
 
@@ -40,48 +40,50 @@ class TrainDataset:
         f_lbl2 = tk.Label(self.root, image=self.photoimg2)
         f_lbl2.place(x=0, y=460, width=1950, height=550)
 
-    # def train_classifier(self):
-    #     dataset_path = "dataset"
+    def train_dataset(self):
+        # Load images and labels from the dataset folder
+        dataset_path = ("dataset")
+        images = []
+        labels = []
 
-    #     # Create a list to store the faces and labels
-    #     faces = []
-    #     labels = []
+        for root, dirs, files in os.walk(dataset_path):
+            for file in files:
+                if file.endswith(".jpg"):
+                    image_path = os.path.join(root, file)
+                    # Extract the label from the filename
+                    label = int(file.split("_")[0])
+                    # Read image in grayscale
+                    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+                    # Resize the image to a consistent shape
+                    resized_image = cv2.resize(image, (100, 100))
+                    # Flatten image to 1D array
+                    images.append(resized_image.flatten())
+                    labels.append(label)
 
-    #     # Iterate over the folders in the dataset directory
-    #     for folder_name in os.listdir(dataset_path):
-    #         folder_path = os.path.join(dataset_path, folder_name)
-    #         if not os.path.isdir(folder_path):
-    #             continue
+                    # Show the image in a window
+                    cv2.imshow("Dataset", resized_image)
+                    cv2.waitKey(50)  # Display each image for 100 milliseconds
 
-    #         label = int(folder_name)  # Convert folder name to integer label
+        # Convert images and labels to numpy arrays
+        images = np.array(images, dtype=np.float32)
+        labels = np.array(labels)
 
-    #         # Iterate over the images in the folder
-    #         for image_name in os.listdir(folder_path):
-    #             image_path = os.path.join(folder_path, image_name)
-    #             if not os.path.isfile(image_path):
-    #                 continue
+        # Create a KNN classifier and train it
+        knn = cv2.ml.KNearest_create()
+        knn.train(images, cv2.ml.ROW_SAMPLE, labels)
+        
+            # Create a "traindata" folder if it doesn't exist
+        traindata_path = "traindata"
+        if not os.path.exists(traindata_path):
+            os.makedirs(traindata_path)
 
-    #             # Read the image and convert it to grayscale
-    #             image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        # Save the trained model inside the "traindata" folder
+        model_path = os.path.join(traindata_path, "trained_model.xml")
+        knn.save(model_path)
 
-    #             # Add the face and label to the lists
-    #             faces.append(image)
-    #             labels.append(label)
+        cv2.destroyAllWindows()
+        messagebox.showinfo("Result", "Training dataset completed")
 
-    #     # Create an LBPH Face Recognizer
-    #     recognizer = cv2.face.LBPHFaceRecognizer_create()
-
-    #     # Train the recognizer using the faces and labels
-    #     recognizer.train(faces, np.array(labels))
-
-    #     # Save the trained recognizer to a file
-    #     recognizer.save("trained_model.xml")
-
-    #     messagebox.showinfo(
-    #         "Success", "Training completed successfully", parent=self.root)
-    
-    def train_classifier(self):
-            
 
 if __name__ == "__main__":
     root = tk.Tk()
