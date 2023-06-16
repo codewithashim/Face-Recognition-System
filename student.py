@@ -1,11 +1,13 @@
 import tkinter
 import tkinter as tk
 from tkinter import ttk
-from tkinter.tix import COLUMN
 from PIL import Image, ImageTk
 from tkinter import messagebox
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
+from bson import ObjectId
+import cv2
+import os
 
 
 try:
@@ -267,7 +269,7 @@ class Student:
 
         # Radio Buttons
         self.var_radio1 = tk.StringVar()
-        radiobtn1 = tk.Radiobutton(class_student_frame, variable=self.var_radio1,  text="Take Photo Sample", value="Yes", font=(
+        radiobtn1 = tk.Radiobutton(class_student_frame,  variable=self.var_radio1,  text="Take Photo Sample", value="Yes", font=(
             "times new roman", 12, "bold"), bg="white")
         radiobtn1.grid(row=5, column=0, padx=10, pady=2, sticky=tk.W)
 
@@ -289,11 +291,11 @@ class Student:
             "times new roman", 12, "bold"), bg="blue", fg="white", width=25)
         update_btn.grid(row=0, column=1)
 
-        delete_btn = tk.Button(btn_frame, text="Delete", font=(
+        delete_btn = tk.Button(btn_frame, text="Delete", command=self.deleteStudent, font=(
             "times new roman", 12, "bold"), bg="blue", fg="white", width=25)
         delete_btn.grid(row=0, column=2)
 
-        reset_btn = tk.Button(btn_frame, text="Reset", font=(
+        reset_btn = tk.Button(btn_frame, text="Reset", command=self.resetData, font=(
             "times new roman", 12, "bold"), bg="blue", fg="white", width=25)
         reset_btn.grid(row=0, column=3)
 
@@ -303,7 +305,7 @@ class Student:
                               relief=tk.RIDGE, bg="white")
         btn_frame2.place(x=0, y=260, width=910, height=35)
 
-        take_photo_btn = tk.Button(btn_frame2, text="Take Photo Sample", font=(
+        take_photo_btn = tk.Button(btn_frame2, command=self.generate_dataset, text="Take Photo Sample", font=(
             "times new roman", 12, "bold"), bg="blue", fg="white", width=55)
         take_photo_btn.grid(row=0, column=0)
 
@@ -453,7 +455,27 @@ class Student:
         self.var_teacher.set(students[13])
         self.var_radio1.set(students[14])
 
-    # +++++++++ function +++++++
+    def update_table(self):
+        self.student_table.delete(*self.student_table.get_children())
+        students = collection.find()
+        for student in students:
+            self.student_table.insert("", tk.END, values=(
+                student["Department"],
+                student["Course"],
+                student["Year"],
+                student["Semester"],
+                student["StudentID"],
+                student["StudentName"],
+                student["Division"],
+                student["RollNo"],
+                student["Gender"],
+                student["DOB"],
+                student["Phone"],
+                student["Email"],
+                student["Address"],
+                student["TeacherName"],
+                student["TakePhotoSample"],
+            ))
 
     def addStudent(self):
         if self.var_dep.get() == "Select Department" or self.var_std_name.get() == "" or self.var_std_id.get() == "":
@@ -462,7 +484,6 @@ class Student:
         else:
             student_id = self.var_std_id.get()
             roll_no = self.var_roll.get()
-            # Query the database to check if the student ID or RollNo already exists
             existing_student = collection.find_one(
                 {"$or": [{"StudentID": student_id}, {"RollNo": roll_no}]})
             if existing_student:
@@ -487,13 +508,15 @@ class Student:
                     "TakePhotoSample": self.var_radio1.get(),
                     "NoPhotoSample": self.var_radio2.get()
                 }
-            result = collection.insert_one(student_data)
-            if result.acknowledged:
-                messagebox.showinfo(
-                    "Success", "Student Added Successfully", parent=self.root)
-            else:
-                messagebox.showerror(
-                    "Error", "Failed to add student", parent=self.root)
+                result = collection.insert_one(student_data)
+                if result.acknowledged:
+                    messagebox.showinfo(
+                        "Success", "Student Added Successfully", parent=self.root)
+                    self.update_table()  # Call the method to update the table
+                else:
+                    messagebox.showerror(
+                        "Error", "Failed to add student", parent=self.root)
+    # +++++++++ function +++++++
 
     # Update Data
 
@@ -502,11 +525,10 @@ class Student:
             messagebox.showerror(
                 "Error", "All fields are required", parent=self.root)
         else:
-
             Update = messagebox.askyesno(
                 "Update", "Do you want to update this student details", parent=self.root)
             if Update > 0:
-                #    Update data in db
+                #  Update data in db
                 student_data = {
                     "Department": self.var_dep.get(),
                     "Course": self.var_course.get(),
@@ -524,25 +546,174 @@ class Student:
                     "TeacherName": self.var_teacher.get(),
                     "TakePhotoSample": self.var_radio1.get(),
                     "NoPhotoSample": self.var_radio2.get()
-
                 }
                 update = collection.update_one(
                     {"StudentID": self.var_std_id.get()}, {"$set": student_data})
                 if update.acknowledged:
-                    column_names = self.student_table["columns"]
-                    students = collection.find()
-                    for student in students:
-                        values = [student.get(column, "")
-                                  for column in column_names]
-                        self.student_table.insert("", tk.END, values=values)
                     messagebox.showinfo(
                         "Success", "Student details updated successfully", parent=self.root)
+                    self.update_table()
                 else:
                     messagebox.showerror(
                         "Error", "Failed to update student details", parent=self.root)
-
             else:
                 return None  # Do nothing
+
+    # Delete Data
+    def deleteStudent(self):
+        selected_item = self.student_table.selection()
+        if not selected_item:
+            messagebox.showerror(
+                "Error", "No student selected", parent=self.root)
+            return
+
+        confirmed = messagebox.askyesno(
+            "Confirm Deletion", "Are you sure you want to delete the selected student?", parent=self.root)
+        if not confirmed:
+            return
+        for item in selected_item:
+            student_id = self.student_table.item(item, "values")[4]
+            result = collection.delete_one({"StudentID": student_id})
+            if result.acknowledged:
+                self.student_table.delete(item)
+                messagebox.showinfo(
+                    "Success", "Student deleted successfully", parent=self.root)
+            else:
+                messagebox.showerror(
+                    "Error", "Failed to delete student", parent=self.root)
+
+    # Reset Data
+
+    def resetData(self):
+        # Clear input fields
+        self.var_dep.set("Select Department")
+        self.var_course.set("")
+        self.var_year.set("")
+        self.var_semester.set("")
+        self.var_std_id.set("")
+        self.var_std_name.set("")
+        self.var_div.set("")
+        self.var_roll.set("")
+        self.var_gender.set("")
+        self.var_dob.set("")
+        self.var_phone.set("")
+        self.var_email.set("")
+        self.var_address.set("")
+        self.var_teacher.set("")
+        self.var_radio1.set(0)
+        self.var_radio2.set(0)
+
+        # Refresh table view
+        self.student_table.delete(*self.student_table.get_children())
+
+        students = collection.find()
+        for student in students:
+            self.student_table.insert("", tk.END, values=(
+                student["Department"],
+                student["Course"],
+                student["Year"],
+                student["Semester"],
+                student["StudentID"],
+                student["StudentName"],
+                student["Division"],
+                student["RollNo"],
+                student["Gender"],
+                student["DOB"],
+                student["Phone"],
+                student["Email"],
+                student["Address"],
+                student["TeacherName"],
+                student["TakePhotoSample"],
+            ))
+
+        messagebox.showinfo(
+            "Success", "Data reset successful", parent=self.root)
+
+    # ============ Genaret data set or take photo sample ==============
+
+    def generate_dataset(self):
+        student_id = self.var_std_id.get()
+
+        # Check if the student ID is provided
+        if student_id == "":
+            messagebox.showerror(
+                "Error", "Please enter a Student ID", parent=self.root)
+            return
+
+        # Query the database to find the student with the provided ID
+        student = collection.find_one({"StudentID": student_id})
+
+        if student:
+            # Update the student data
+            updated_data = {
+                
+                "TakePhotoSample": True,  # Set the TakePhotoSample field to True
+                # Update other fields if needed
+            }
+            collection.update_one({"_id": student["_id"]}, {
+                                  "$set": updated_data})
+
+            # Load the face classifier
+            face_classifier = cv2.CascadeClassifier(
+                "haarcascade_frontalface_default.xml")
+
+            # Capture video from webcam
+            video_capture = cv2.VideoCapture(0)
+
+            # Create a directory to store the dataset if it doesn't exist
+            dataset_path = "dataset"
+            if not os.path.exists(dataset_path):
+                os.makedirs(dataset_path)
+
+            # Create a folder for the student's photo samples
+            student_folder = f"{dataset_path}/{student_id}"
+            if not os.path.exists(student_folder):
+                os.makedirs(student_folder)
+
+            # Initialize variables
+            sample_count = 0
+            max_samples = 50  # Maximum number of samples to capture
+
+            while True:
+                ret, frame = video_capture.read()
+
+                # Convert the frame to grayscale for face detection
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+                # Detect faces in the grayscale frame
+                faces = face_classifier.detectMultiScale(
+                    gray, scaleFactor=1.3, minNeighbors=5)
+
+                for (x, y, w, h) in faces:
+                    # Save the captured face region as an image in the student's folder
+                    image_path = f"{student_folder}/{student_id}_{str(sample_count).zfill(3)}.jpg"
+                    cv2.imwrite(image_path, frame[y:y+h, x:x+w])
+
+                    sample_count += 1
+
+                    # Check if the maximum number of samples is reached
+                    if sample_count >= max_samples:
+                        break
+
+                    # Draw a rectangle around the detected face on the frame
+                    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+
+                # Display the frame
+                cv2.imshow("Capture", frame)
+
+                # Check if the 'q' key is pressed to stop capturing
+                if cv2.waitKey(1) & 0xFF == ord('q') or sample_count >= max_samples:
+                    break
+
+            # Release the video capture object and close the OpenCV windows
+            video_capture.release()
+            cv2.destroyAllWindows()
+
+            messagebox.showinfo(
+                "Success", "Dataset generated successfully", parent=self.root)
+        else:
+            messagebox.showerror(
+                "Error", "Student ID not found in the database", parent=self.root)
 
 
 if __name__ == "__main__":

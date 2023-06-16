@@ -1,9 +1,12 @@
+import sys
 import tkinter
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 from PIL import Image, ImageTk
-
 from student import Student
+import subprocess
+import os
 
 
 class Face_Recognition_System:
@@ -127,10 +130,11 @@ class Face_Recognition_System:
         img_photos = Image.open(img_path_photos)
         img_photos = img_photos.resize((220, 220), Image.ANTIALIAS)
         self.photoimg_photos = ImageTk.PhotoImage(img_photos)
-        b6 = tk.Button(bg_lbl, image=self.photoimg_photos, cursor="hand2")
+        b6 = tk.Button(bg_lbl, command=self.openPhoto,
+                       image=self.photoimg_photos, cursor="hand2")
         b6.place(x=200, y=380, width=220, height=220)
 
-        b6_6 = tk.Button(bg_lbl, text="Photos", cursor="hand2", font=(
+        b6_6 = tk.Button(bg_lbl, command=self.openPhoto, text="Photos", cursor="hand2", font=(
             "times new roman", 15, "bold"), bg="darkblue", fg="white")
         b6_6.place(x=200, y=580, width=220, height=40)
 
@@ -178,6 +182,22 @@ class Face_Recognition_System:
     def student_details(self):
         self.new_window = tk.Toplevel(self.root)
         self.app = Student(self.new_window)
+
+    def openPhoto(self):
+        folder_path = "dataset/"
+
+        if sys.platform == "win32":
+            subprocess.Popen(f'explorer "{folder_path}"')
+        elif sys.platform == "darwin":
+            subprocess.Popen(["open", folder_path])
+        elif sys.platform.startswith("linux"):
+            subprocess.Popen(["xdg-open", folder_path])
+        else:
+            messagebox.showerror("Error", "Unsupported platform")
+
+            
+
+        
 
 
 if __name__ == "__main__":
