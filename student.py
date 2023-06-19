@@ -3,19 +3,26 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 from tkinter import messagebox
-from pymongo import MongoClient
-from pymongo.errors import ConnectionFailure
 from bson import ObjectId
 import cv2
 import os
+from pymongo import MongoClient
+from pymongo.errors import ConfigurationError
 
+uri = "mongodb+srv://codewithashim:ApiBqTIIZ4BYi93h@facerecognition.hjt9mmz.mongodb.net/FaceRecognition?retryWrites=true&w=majority"
 
 try:
-    client = MongoClient(
-        "mongodb+srv://codewithashim:ApiBqTIIZ4BYi93h@facerecognition.hjt9mmz.mongodb.net/FaceRecognition?retryWrites=true&w=majority")
-    print("Connected to MongoDB Atlas")
-except ConnectionFailure:
-    print("Failed to connect to MongoDB Atlas")
+    client = MongoClient(uri)
+
+    print("Connected to MongoDB successfully!")
+
+except ConfigurationError as e:
+    print("Error: Failed to connect to MongoDB.")
+    print("ConfigurationError:", str(e))
+
+except Exception as e:
+    print("Error: An unexpected error occurred.")
+    print("Exception:", str(e))
 
 collection = client["FaceRecognition"]["Student"]
 
@@ -631,96 +638,13 @@ class Student:
 
     # ============ Genaret data set or take photo sample ==============
 
-    # def generate_dataset(self):
-    #     student_id = self.var_std_id.get()
-
-    #     # Check if the student ID is provided
-    #     if student_id == "":
-    #         messagebox.showerror(
-    #             "Error", "Please enter a Student ID", parent=self.root)
-    #         return
-
-    #     # Query the database to find the student with the provided ID
-    #     student = collection.find_one({"StudentID": student_id})
-
-    #     if student:
-    #         # Update the student data
-    #         updated_data = {
-                
-    #             "TakePhotoSample": True,  # Set the TakePhotoSample field to True
-    #             # Update other fields if needed
-    #         }
-    #         collection.update_one({"_id": student["_id"]}, {
-    #                               "$set": updated_data})
-
-    #         # Load the face classifier
-    #         face_classifier = cv2.CascadeClassifier(
-    #             "haarcascade_frontalface_default.xml")
-
-    #         # Capture video from webcam
-    #         video_capture = cv2.VideoCapture(0)
-
-    #         # Create a directory to store the dataset if it doesn't exist
-    #         dataset_path = "dataset"
-    #         if not os.path.exists(dataset_path):
-    #             os.makedirs(dataset_path)
-
-    #         # Create a folder for the student's photo samples
-    #         student_folder = f"{dataset_path}/{student_id}"
-    #         if not os.path.exists(student_folder):
-    #             os.makedirs(student_folder)
-
-    #         # Initialize variables
-    #         sample_count = 0
-    #         max_samples = 50  # Maximum number of samples to capture
-
-    #         while True:
-    #             ret, frame = video_capture.read()
-
-    #             # Convert the frame to grayscale for face detection
-    #             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    #             # Detect faces in the grayscale frame
-    #             faces = face_classifier.detectMultiScale(
-    #                 gray, scaleFactor=1.3, minNeighbors=5)
-
-    #             for (x, y, w, h) in faces:
-    #                 # Save the captured face region as an image in the student's folder
-    #                 image_path = f"{student_folder}/{student_id}_{str(sample_count).zfill(3)}.jpg"
-    #                 cv2.imwrite(image_path, frame[y:y+h, x:x+w])
-
-    #                 sample_count += 1
-
-    #                 # Check if the maximum number of samples is reached
-    #                 if sample_count >= max_samples:
-    #                     break
-
-    #                 # Draw a rectangle around the detected face on the frame
-    #                 cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-
-    #             # Display the frame
-    #             cv2.imshow("Capture", frame)
-
-    #             # Check if the 'q' key is pressed to stop capturing
-    #             if cv2.waitKey(1) & 0xFF == ord('q') or sample_count >= max_samples:
-    #                 break
-
-    #         # Release the video capture object and close the OpenCV windows
-    #         video_capture.release()
-    #         cv2.destroyAllWindows()
-
-    #         messagebox.showinfo(
-    #             "Success", "Dataset generated successfully", parent=self.root)
-    #     else:
-    #         messagebox.showerror(
-    #             "Error", "Student ID not found in the database", parent=self.root)
-
     def generate_dataset(self):
         student_id = self.var_std_id.get()
 
         # Check if the student ID is provided
         if student_id == "":
-            messagebox.showerror("Error", "Please enter a Student ID", parent=self.root)
+            messagebox.showerror(
+                "Error", "Please enter a Student ID", parent=self.root)
             return
 
         # Query the database to find the student with the provided ID
@@ -732,10 +656,12 @@ class Student:
                 "TakePhotoSample": True,  # Set the TakePhotoSample field to True
                 # Update other fields if needed
             }
-            collection.update_one({"_id": student["_id"]}, {"$set": updated_data})
+            collection.update_one({"_id": student["_id"]}, {
+                                  "$set": updated_data})
 
             # Load the face classifier
-            face_classifier = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+            face_classifier = cv2.CascadeClassifier(
+                "haarcascade_frontalface_default.xml")
 
             # Capture video from webcam
             video_capture = cv2.VideoCapture(0)
@@ -756,7 +682,8 @@ class Student:
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
                 # Detect faces in the grayscale frame
-                faces = face_classifier.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
+                faces = face_classifier.detectMultiScale(
+                    gray, scaleFactor=1.3, minNeighbors=5)
 
                 for (x, y, w, h) in faces:
                     # Save the captured face region as an image in the dataset directory
@@ -783,9 +710,11 @@ class Student:
             video_capture.release()
             cv2.destroyAllWindows()
 
-            messagebox.showinfo("Success", "Dataset generated successfully", parent=self.root)
+            messagebox.showinfo(
+                "Success", "Dataset generated successfully", parent=self.root)
         else:
-            messagebox.showerror("Error", "Student ID not found in the database", parent=self.root)
+            messagebox.showerror(
+                "Error", "Student ID not found in the database", parent=self.root)
 
 
 if __name__ == "__main__":

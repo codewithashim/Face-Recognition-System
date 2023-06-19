@@ -42,7 +42,7 @@ class TrainDataset:
 
     def train_dataset(self):
         # Load images and labels from the dataset folder
-        dataset_path = ("dataset")
+        dataset_path = "dataset"
         images = []
         labels = []
 
@@ -56,30 +56,30 @@ class TrainDataset:
                     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
                     # Resize the image to a consistent shape
                     resized_image = cv2.resize(image, (100, 100))
-                    # Flatten image to 1D array
-                    images.append(resized_image.flatten())
+                    # Append the resized image to the list
+                    images.append(resized_image)
                     labels.append(label)
 
                     # Show the image in a window
                     cv2.imshow("Dataset", resized_image)
-                    cv2.waitKey(50)  # Display each image for 100 milliseconds
+                    cv2.waitKey(50)  # Display each image for 50 milliseconds
 
         # Convert images and labels to numpy arrays
-        images = np.array(images, dtype=np.float32)
+        images = np.array(images)
         labels = np.array(labels)
 
-        # Create a KNN classifier and train it
-        knn = cv2.ml.KNearest_create()
-        knn.train(images, cv2.ml.ROW_SAMPLE, labels)
-        
-            # Create a "traindata" folder if it doesn't exist
+        # Create a LBPH recognizer and train it
+        recognizer = cv2.face.LBPHFaceRecognizer_create()
+        recognizer.train(images, labels)
+
+        # Create a "traindata" folder if it doesn't exist
         traindata_path = "traindata"
         if not os.path.exists(traindata_path):
             os.makedirs(traindata_path)
 
         # Save the trained model inside the "traindata" folder
         model_path = os.path.join(traindata_path, "trained_model.xml")
-        knn.save(model_path)
+        recognizer.save(model_path)
 
         cv2.destroyAllWindows()
         messagebox.showinfo("Result", "Training dataset completed")

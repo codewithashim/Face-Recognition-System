@@ -5,6 +5,8 @@ from tkinter import ttk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 from student import Student
+from trainDataset import TrainDataset
+from faceRecognition import FaceRecognition
 import subprocess
 import os
 
@@ -61,7 +63,6 @@ class Face_Recognition_System:
         title_lbl.place(x=0, y=0, width=1950, height=45)
 
         # Student Button
-
         img_path_student = "/home/codewithashim/Web Application Drive/Programmer Lab/Advance Face Recognigection/Images/student.png"
         img_student = Image.open(img_path_student)
         img_student = img_student.resize((220, 220), Image.ANTIALIAS)
@@ -80,9 +81,10 @@ class Face_Recognition_System:
         img_detect_face = Image.open(img_path_detect_face)
         img_detect_face = img_detect_face.resize((220, 220), Image.ANTIALIAS)
         self.photoimg_detect_face = ImageTk.PhotoImage(img_detect_face)
-        b2 = tk.Button(bg_lbl, image=self.photoimg_detect_face, cursor="hand2")
+        b2 = tk.Button(bg_lbl, image=self.photoimg_detect_face,
+                       command=self.face_recognition, cursor="hand2")
         b2.place(x=500, y=100, width=220, height=220)
-        b2_2 = tk.Button(bg_lbl, text="Face Detector", cursor="hand2", font=(
+        b2_2 = tk.Button(bg_lbl, text="Face Detector", command=self.face_recognition, cursor="hand2", font=(
             "times new roman", 15, "bold"), bg="darkblue", fg="white")
         b2_2.place(x=500, y=300, width=220, height=40)
 
@@ -117,7 +119,8 @@ class Face_Recognition_System:
         img_train_data = Image.open(img_path_train_data)
         img_train_data = img_train_data.resize((220, 220), Image.ANTIALIAS)
         self.photoimg_train_data = ImageTk.PhotoImage(img_train_data)
-        b5 = tk.Button(bg_lbl, image=self.photoimg_train_data, cursor="hand2")
+        b5 = tk.Button(bg_lbl, command=self.train_dataset,
+                       image=self.photoimg_train_data, cursor="hand2")
         b5.place(x=1400, y=100, width=220, height=220)
 
         b5_5 = tk.Button(bg_lbl, text="Train Data", cursor="hand2", font=(
@@ -195,9 +198,13 @@ class Face_Recognition_System:
         else:
             messagebox.showerror("Error", "Unsupported platform")
 
-            
+    def train_dataset(self):
+        self.new_window = tk.Toplevel(self.root)
+        self.app = TrainDataset(self.new_window)
 
-        
+    def face_recognition(self):
+        self.new_window = tk.Toplevel(self.root)
+        self.app = FaceRecognition(self.new_window)
 
 
 if __name__ == "__main__":
