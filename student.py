@@ -8,12 +8,18 @@ import cv2
 import os
 from pymongo import MongoClient
 from pymongo.errors import ConfigurationError
+from dotenv import load_dotenv
 
-uri = "mongodb+srv://codewithashim:ApiBqTIIZ4BYi93h@facerecognition.hjt9mmz.mongodb.net/FaceRecognition?retryWrites=true&w=majority"
+# Load environment variables from .env
+load_dotenv()
+
+# Access environment variables
+database_url = os.getenv("MONGO_URI")
+db_name = os.getenv("DB_NAME")
+students_collection = os.getenv("STUDENT_DB_COLLECTION")
 
 try:
-    client = MongoClient(uri)
-
+    client = MongoClient(database_url)
     print("Connected to MongoDB successfully!")
 
 except ConfigurationError as e:
@@ -24,8 +30,7 @@ except Exception as e:
     print("Error: An unexpected error occurred.")
     print("Exception:", str(e))
 
-collection = client["FaceRecognition"]["Student"]
-
+collection = client[db_name][students_collection]
 
 class Student:
     def __init__(self, root):
