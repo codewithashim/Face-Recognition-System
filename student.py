@@ -20,6 +20,7 @@ students_collection = os.getenv("STUDENT_DB_COLLECTION")
 
 try:
     client = MongoClient(database_url)
+
     print("Connected to MongoDB successfully!")
 
 except ConfigurationError as e:

@@ -9,6 +9,9 @@ from pymongo import MongoClient
 from pymongo.errors import ConfigurationError
 import cv2
 from dotenv import load_dotenv
+from datetime import datetime
+from time import strftime
+import csv
 
 # Load environment variables from .env
 load_dotenv()
@@ -113,6 +116,7 @@ class FaceRecognition:
                             student_name = student_data["StudentName"]
                             roll_no = student_data["RollNo"]
                             student_id = student_data["StudentID"]
+                            department = student_data["Department"]
 
                             # Display student details on the frame
                             cv2.putText(frame, f"Name: {student_name}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9,
@@ -121,6 +125,10 @@ class FaceRecognition:
                                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                             cv2.putText(frame, f"Student ID: {student_id}", (x, y + h + 60),
                                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                            cv2.putText(frame, f"Department: {department}", (
+                                x, y + h + 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2),
+                            self.take_attendance(
+                                student_id, roll_no, student_name, department)
                         else:
                             cv2.putText(frame, "Unknown", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9,
                                         (0, 0, 255), 2)
@@ -146,6 +154,21 @@ class FaceRecognition:
             # Release the video capture and destroy all windows
             video_capture.release()
             cv2.destroyAllWindows()
+
+# =========================== Take Attendance =========================
+    def take_attendance(self, i, r, n, d):
+        with open("attendance/attendance.csv", "r+", newline="\n") as f:
+            myDataList = f.readlines()
+            name_list = []
+
+            for line in myDataList:
+                entry = line.split((","))
+                name_list.append(entry[0])
+            if ((i not in name_list) and (r not in name_list) and (n not in name_list) and (d not in name_list)):
+                now = datetime.now()
+                d1 = now.strftime("%d/%m/%Y")
+                dtString = now.strftime("%H:%M:%S")
+                f.writelines(f"\n{i},{r},{n},{d},{dtString},{d1},Present")
 
 
 if __name__ == "__main__":

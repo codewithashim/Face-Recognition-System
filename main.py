@@ -7,6 +7,7 @@ from PIL import Image, ImageTk
 from student import Student
 from trainDataset import TrainDataset
 from faceRecognition import FaceRecognition
+from attendance import Attendance
 import subprocess
 import os
 
@@ -94,9 +95,9 @@ class Face_Recognition_System:
         img_attendance = Image.open(img_path_attendance)
         img_attendance = img_attendance.resize((220, 220), Image.ANTIALIAS)
         self.photoimg_attendance = ImageTk.PhotoImage(img_attendance)
-        b3 = tk.Button(bg_lbl, image=self.photoimg_attendance, cursor="hand2")
+        b3 = tk.Button(bg_lbl, image=self.photoimg_attendance, command=self.attendance, cursor="hand2")
         b3.place(x=800, y=100, width=220, height=220)
-        b3_3 = tk.Button(bg_lbl, text="Attendance", cursor="hand2", font=(
+        b3_3 = tk.Button(bg_lbl, text="Attendance", command=self.attendance, cursor="hand2", font=(
             "times new roman", 15, "bold"), bg="darkblue", fg="white")
         b3_3.place(x=800, y=300, width=220, height=40)
 
@@ -205,6 +206,10 @@ class Face_Recognition_System:
     def face_recognition(self):
         self.new_window = tk.Toplevel(self.root)
         self.app = FaceRecognition(self.new_window)
+    
+    def attendance(self):
+        self.new_window = tk.Toplevel(self.root)
+        self.app = Attendance(self.new_window)    
 
 
 if __name__ == "__main__":
