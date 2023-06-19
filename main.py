@@ -8,6 +8,7 @@ from student import Student
 from trainDataset import TrainDataset
 from faceRecognition import FaceRecognition
 from attendance import Attendance
+from developer import Developer
 import subprocess
 import os
 
@@ -148,10 +149,10 @@ class Face_Recognition_System:
         img_developer = Image.open(img_path_developer)
         img_developer = img_developer.resize((220, 220), Image.ANTIALIAS)
         self.photoimg_developer = ImageTk.PhotoImage(img_developer)
-        b7 = tk.Button(bg_lbl, image=self.photoimg_developer, cursor="hand2")
+        b7 = tk.Button(bg_lbl,command=self.developer, image=self.photoimg_developer, cursor="hand2")
         b7.place(x=500, y=380, width=220, height=220)
 
-        b7_7 = tk.Button(bg_lbl, text="Developer", cursor="hand2", font=(
+        b7_7 = tk.Button(bg_lbl,command=self.developer, text="Developer", cursor="hand2", font=(
             "times new roman", 15, "bold"), bg="darkblue", fg="white")
         b7_7.place(x=500, y=580, width=220, height=40)
 
@@ -174,10 +175,10 @@ class Face_Recognition_System:
         img_exit = Image.open(img_path_exit)
         img_exit = img_exit.resize((220, 220), Image.ANTIALIAS)
         self.photoimg_exit = ImageTk.PhotoImage(img_exit)
-        b9 = tk.Button(bg_lbl, image=self.photoimg_exit, cursor="hand2")
+        b9 = tk.Button(bg_lbl,command=self.exit, image=self.photoimg_exit, cursor="hand2")
         b9.place(x=1100, y=380, width=220, height=220)
 
-        b9_9 = tk.Button(bg_lbl, text="Exit", cursor="hand2", font=(
+        b9_9 = tk.Button(bg_lbl,command=self.exit, text="Exit", cursor="hand2", font=(
             "times new roman", 15, "bold"), bg="darkblue", fg="white")
         b9_9.place(x=1100, y=580, width=220, height=40)
 
@@ -209,7 +210,19 @@ class Face_Recognition_System:
     
     def attendance(self):
         self.new_window = tk.Toplevel(self.root)
-        self.app = Attendance(self.new_window)    
+        self.app = Attendance(self.new_window)  
+    
+    def developer(self):
+        self.new_window = tk.Toplevel(self.root)
+        self.app = Developer(self.new_window)
+    
+    def exit(self):
+        self.exit = messagebox.askyesno("Face Recognition", "Are you sure exit this project", parent=self.root)
+        if self.exit > 0:
+            self.root.destroy()
+        else:
+            return
+                  
 
 
 if __name__ == "__main__":
